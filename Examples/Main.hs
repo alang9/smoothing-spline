@@ -1,5 +1,13 @@
 module Main where
 
+import Graphics.Rendering.Chart
+import Graphics.Rendering.Chart.Gtk
+import Math.Spline.BSpline
+import Numeric.Container
+
+import Math.Spline.Smoothing
+import Graphics.Rendering.Chart.Spline
+
 weightedDataPts1 :: [(Double, Double, Double)]
 weightedDataPts1 = [(x, sin (-x^2), exp x) | x <- [-5,-4.75..5]]
 
