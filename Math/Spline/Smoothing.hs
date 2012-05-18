@@ -62,7 +62,8 @@ covWeighted degree knotList dataPts weightMatrix = bSpline knots solution
                (trans coeffs <> weightMatrix <> dataYC)
 
 -- | Smoothing spline based on the (degree - 1)st derivative of the spline.
-basicSmooth :: Double -> Int -> [Double] -> [(Double, Double)] -> Matrix Double
+basicSmooth :: Double -- ^ Smoothness coefficient -- A non-negative number
+            -> Int -> [Double] -> [(Double, Double)] -> Matrix Double
             -> BSpline Double
 basicSmooth smoothness degree knotList dataPts weightMatrix =
     bSpline knots solution
@@ -87,7 +88,8 @@ basicSmooth smoothness degree knotList dataPts weightMatrix =
                           `add` scale smoothness integralMatrix)
                <\> (trans coeffs <> weightMatrix <> dataYC)
 
-smoothCubic :: Double -> [(Double, Double, Double)] -> BSpline Double
+smoothCubic :: Double -- ^ Smoothness coefficient -- A non-negative number
+            -> [(Double, Double, Double)] -> BSpline Double
 smoothCubic smoothness dataPts =
     basicSmooth smoothness 3 ks (zip xs ys) (diag $ fromList zs)
   where
