@@ -10,15 +10,11 @@ import Data.Packed.Matrix
 import Data.Packed.Vector
 import Data.Vector.Generic (convert)
 import Data.Vector.Storable ()
-import Math.Polynomial
+import Math.Polynomial hiding (x)
 import Math.Spline.BSpline
 import Math.Spline.BSpline.Reference
-import Math.Spline.Knots hiding (fromList)
+import Math.Spline.Knots hiding (fromList, knots)
 import Numeric.Container
-import Numeric.LinearAlgebra
-import Numeric.LinearAlgebra.LAPACK
-
-import Control.Arrow
 
 ordinary :: Int -> [Double] -> [(Double, Double)] -> BSpline Double
 ordinary degree knotList dataPts = bSpline knots solution

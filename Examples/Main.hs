@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -Wall #-}
+
 module Main where
 
 import Graphics.Rendering.Chart
@@ -9,7 +11,7 @@ import Math.Spline.Smoothing
 import Graphics.Rendering.Chart.Spline
 
 weightedDataPts1 :: [(Double, Double, Double)]
-weightedDataPts1 = [(x, sin (-x^2), exp x) | x <- [-5,-4.75..5]]
+weightedDataPts1 = [(x, sin (x * x), exp x) | x <- [-5,-4.75..5]]
 
 spline1 :: BSpline Double
 spline1 = basicSmooth 1e-3 3 ([-5,-5,-5] ++ map (\(x,_,_) -> x) weightedDataPts1 ++ [6,6,6])

@@ -8,13 +8,9 @@ import Data.Accessor
 import Data.Colour
 import Data.Colour.Names
 import Graphics.Rendering.Chart
-import Graphics.Rendering.Chart.Gtk
 import Math.Spline
 import Math.Spline.BSpline
 import Math.Spline.Knots hiding (fromList)
-import Numeric.Container
-
-import Math.Spline.Smoothing
 
 plotBSpline :: BSpline Double -> [(Double, Double, Double)] -> Layout1 Double Double
 plotBSpline spline weightedDataPts = layout
