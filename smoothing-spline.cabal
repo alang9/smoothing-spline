@@ -16,6 +16,6 @@ build-type:          Simple
 cabal-version:       >=1.8
 
 library
-  exposed-modules:     Main, Graphics.Rendering.Chart.Spline, Math.Spline.Smoothing
+  exposed-modules:     Graphics.Rendering.Chart.Spline, Math.Spline.Smoothing
   -- other-modules:       
-  -- build-depends:       
+  build-depends:       base, splines, hmatrix, Chart, Chart-gtk, colour, data-accessor, containers, polynomial, vector
