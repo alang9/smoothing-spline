@@ -1,7 +1,9 @@
 -- | Double-precision BSpline smoothing using hmatrix
 
 module Math.Spline.Smoothing
-    ( ordinary, unweighted, weighted, covWeighted, basicSmooth, smoothCubic
+    ( ordinary, unweighted, weighted, covWeighted, basicSmooth
+    -- * Functions for convenience
+    , smoothCubic, smoothQuadratic
     ) where
 
 import Data.List (transpose, zip4)
@@ -96,3 +98,12 @@ smoothCubic smoothness dataPts =
     (xs,ys,zs) = unzip3 dataPts
     ks = replicate 3 (head xs) ++ xs
          ++ replicate 3 (2 * last xs - (last (init xs)))
+
+smoothQuadratic :: Double -- ^ Smoothness coefficient -- A non-negative number
+                -> [(Double, Double, Double)] -> BSpline Double
+smoothQuadratic smoothness dataPts =
+    basicSmooth smoothness 2 ks (zip xs ys) (diag $ fromList zs)
+  where
+    (xs,ys,zs) = unzip3 dataPts
+    ks = replicate 2 (head xs) ++ xs
+         ++ replicate 2 (2 * last xs - (last (init xs)))
