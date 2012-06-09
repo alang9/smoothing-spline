@@ -11,14 +11,17 @@ import Data.List (transpose, zip4)
 import Data.Packed.Matrix
 import Data.Packed.Vector
 import Data.Vector.Generic (convert)
-import Data.Vector.Storable ()
+import qualified Data.Vector.Storable as SV
 import Math.Polynomial hiding (x)
 import Math.Spline.BSpline
 import Math.Spline.BSpline.Reference
 import Math.Spline.Knots hiding (fromList, knots)
 import Numeric.Container
+import Numeric.LinearAlgebra.Algorithms
 
-ordinary :: Int -> [Double] -> [(Double, Double)] -> BSpline Double
+import Debug.Trace
+
+ordinary :: Int -> [Double] -> [(Double, Double)] -> BSpline SV.Vector Double
 ordinary degree knotList dataPts = bSpline knots solution
   where
     splineBases = basisFunctions knots !! degree
@@ -29,7 +32,7 @@ ordinary degree knotList dataPts = bSpline knots solution
     solution = convert $ coeffs <\> dataYC
 
 -- | Same as ordinary.
-unweighted :: Int -> [Double] -> [(Double, Double)] -> BSpline Double
+unweighted :: Int -> [Double] -> [(Double, Double)] -> BSpline SV.Vector Double
 unweighted = ordinary
 
 -- | Weighted smoothing spline, with weights supplied per point and with no
@@ -37,7 +40,7 @@ unweighted = ordinary
 weighted :: Int -> [Double]
          -> [(Double, Double, Double)]
          -- ^ a list of (abscissa, ordinate, weight) tuples
-         -> BSpline Double
+         -> BSpline SV.Vector Double
 weighted degree knotList dataPts = bSpline knots solution
   where
     splineBases = basisFunctions knots !! degree
@@ -52,7 +55,7 @@ weighted degree knotList dataPts = bSpline knots solution
 -- | Weighted smoothing spline with weights and covariance supplied as a
 -- weight matrix
 covWeighted :: Int -> [Double] -> [(Double, Double)] -> Matrix Double
-            -> BSpline Double
+            -> BSpline SV.Vector Double
 covWeighted degree knotList dataPts weightMatrix = bSpline knots solution
   where
     splineBases = basisFunctions knots !! degree
@@ -66,7 +69,7 @@ covWeighted degree knotList dataPts weightMatrix = bSpline knots solution
 -- | Smoothing spline based on the (degree - 1)st derivative of the spline.
 basicSmooth :: Double -- ^ Smoothness coefficient -- A non-negative number
             -> Int -> [Double] -> [(Double, Double)] -> Matrix Double
-            -> BSpline Double
+            -> BSpline SV.Vector Double
 basicSmooth smoothness degree knotList dataPts weightMatrix =
     bSpline knots solution
   where
@@ -76,7 +79,7 @@ basicSmooth smoothness degree knotList dataPts weightMatrix =
     dKnots = distinctKnots knots
     integrands = [ zip4 dKnots (tail dKnots) x y
                    | x <- derivBases, y <- derivBases]
-    integrals = flip map integrands $ \l -> sum $ map f l
+    integrals = map (sum . map f) integrands
       where
         f (start, end, poly1, poly2) = p end - p start
           where
@@ -86,12 +89,13 @@ basicSmooth smoothness degree knotList dataPts weightMatrix =
     (dataXs, dataYs) = unzip dataPts
     dataYC = fromList dataYs
     coeffs = fromColumns $ map (\f -> fromList $ map f dataXs) splineBases
-    solution = convert $ ((trans coeffs <> weightMatrix <> coeffs)
+    solution = traceShow (trans coeffs <> weightMatrix <> coeffs) $
+               convert . head . toColumns $ cholSH ((trans coeffs <> weightMatrix <> coeffs)
                           `add` scale smoothness integralMatrix)
-               <\> (trans coeffs <> weightMatrix <> dataYC)
+               `cholSolve` asColumn (trans coeffs <> weightMatrix <> dataYC)
 
 smoothCubic :: Double -- ^ Smoothness coefficient -- A non-negative number
-            -> [(Double, Double, Double)] -> BSpline Double
+            -> [(Double, Double, Double)] -> BSpline SV.Vector Double
 smoothCubic smoothness dataPts =
     basicSmooth smoothness 3 ks (zip xs ys) (diag $ fromList zs)
   where
@@ -100,7 +104,7 @@ smoothCubic smoothness dataPts =
          ++ replicate 3 (2 * last xs - (last (init xs)))
 
 smoothQuadratic :: Double -- ^ Smoothness coefficient -- A non-negative number
-                -> [(Double, Double, Double)] -> BSpline Double
+                -> [(Double, Double, Double)] -> BSpline SV.Vector Double
 smoothQuadratic smoothness dataPts =
     basicSmooth smoothness 2 ks (zip xs ys) (diag $ fromList zs)
   where

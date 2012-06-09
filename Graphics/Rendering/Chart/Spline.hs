@@ -7,12 +7,13 @@ import qualified Data.Map as M
 import Data.Accessor
 import Data.Colour
 import Data.Colour.Names
+import qualified Data.Vector.Storable as VS
 import Graphics.Rendering.Chart
 import Math.Spline
 import Math.Spline.BSpline
 import Math.Spline.Knots hiding (fromList)
 
-plotBSpline :: BSpline Double -> [(Double, Double, Double)] -> Layout1 Double Double
+plotBSpline :: BSpline VS.Vector Double -> [(Double, Double, Double)] -> Layout1 Double Double
 plotBSpline spline weightedDataPts = layout
   where
     knotVec = knotVector spline
