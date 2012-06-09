@@ -38,13 +38,13 @@ ytm = 1/12
 
 
 
-f x = (evalBSpline spline3 x - evalBSpline (differentiateBSpline spline3) x / sqrt ytm
-      + evalBSpline (differentiateBSpline . differentiateBSpline $ spline3) x / sqrt ytm ^ 2
-            - evalBSpline (differentiateBSpline . differentiateBSpline . differentiateBSpline $ spline3) x / sqrt ytm ^ 3) * k + evalBSpline pc x
+f x = (evalNaturalBSpline spline3 x - evalNaturalBSpline (differentiateBSpline spline3) x / sqrt ytm
+      + evalNaturalBSpline (differentiateBSpline . differentiateBSpline $ spline3) x / sqrt ytm ^ 2
+            - evalNaturalBSpline (differentiateBSpline . differentiateBSpline . differentiateBSpline $ spline3) x / sqrt ytm ^ 3) * k + evalNaturalBSpline pc x
   where
     k = exp (sqrt ytm * x)
 
-h x = evalBSpline (differentiateBSpline . differentiateBSpline . differentiateBSpline $ spline3) x * k / sqrt ytm ^ 3
+h x = evalNaturalBSpline (differentiateBSpline . differentiateBSpline . differentiateBSpline $ spline3) x * k / sqrt ytm ^ 3
   where
     k = exp (sqrt ytm * x)
 
@@ -52,7 +52,7 @@ pc = bSpline (knotVector pc') (V.postscanl' (\s (x, c, c') -> s + (c - c') * exp
   where
     pc' = differentiateBSpline . differentiateBSpline . differentiateBSpline $ spline3
 
-g x = evalBSpline spline3 x * k
+g x = evalNaturalBSpline spline3 x * k
   where
     k = exp (sqrt ytm * x)
 
@@ -71,7 +71,7 @@ plotFn fun = layout
     spline3 = plot_lines_values ^= [[(x, h x / 100) | x <- [-5,-4.99..5]]]
               $ plot_lines_style .> line_color ^= opaque orange
               $ defaultPlotLines
-    spline4 = plot_lines_values ^= [[(x, evalBSpline pc x / 10000) | x <- [-5,-4.99..5]]]
+    spline4 = plot_lines_values ^= [[(x, evalNaturalBSpline pc x / 10000) | x <- [-5,-4.99..5]]]
               $ plot_lines_style .> line_color ^= opaque green
               $ defaultPlotLines
     layout = layout1_plots ^= [ Left (toPlot spline1)

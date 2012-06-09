@@ -10,7 +10,6 @@ import Data.List (transpose, zip4)
 
 import Data.Packed.Matrix
 import Data.Packed.Vector
-import Data.Vector.Generic (convert)
 import qualified Data.Vector.Storable as SV
 import Math.Polynomial hiding (x)
 import Math.Spline.BSpline
@@ -29,7 +28,7 @@ ordinary degree knotList dataPts = bSpline knots solution
     (dataXs, dataYs) = unzip dataPts
     dataYC = fromList dataYs
     coeffs = fromColumns $ map (\f -> fromList $ map f dataXs) splineBases
-    solution = convert $ coeffs <\> dataYC
+    solution = coeffs <\> dataYC
 
 -- | Same as ordinary.
 unweighted :: Int -> [Double] -> [(Double, Double)] -> BSpline SV.Vector Double
@@ -49,7 +48,7 @@ weighted degree knotList dataPts = bSpline knots solution
     weightMatrix = diag $ fromList weights
     dataYC = fromList dataYs
     coeffs = fromColumns $ map (\f -> fromList $ map f dataXs) splineBases
-    solution = convert $ (trans coeffs <> weightMatrix <> coeffs) <\>
+    solution = (trans coeffs <> weightMatrix <> coeffs) <\>
                (trans coeffs <> weightMatrix <> dataYC)
 
 -- | Weighted smoothing spline with weights and covariance supplied as a
@@ -63,7 +62,7 @@ covWeighted degree knotList dataPts weightMatrix = bSpline knots solution
     (dataXs, dataYs) = unzip dataPts
     dataYC = fromList dataYs
     coeffs = fromColumns $ map (\f -> fromList $ map f dataXs) splineBases
-    solution = convert $ (trans coeffs <> weightMatrix <> coeffs) <\>
+    solution = (trans coeffs <> weightMatrix <> coeffs) <\>
                (trans coeffs <> weightMatrix <> dataYC)
 
 -- | Smoothing spline based on the (degree - 1)st derivative of the spline.
@@ -90,7 +89,7 @@ basicSmooth smoothness degree knotList dataPts weightMatrix =
     dataYC = fromList dataYs
     coeffs = fromColumns $ map (\f -> fromList $ map f dataXs) splineBases
     solution = traceShow (trans coeffs <> weightMatrix <> coeffs) $
-               convert . head . toColumns $ cholSH ((trans coeffs <> weightMatrix <> coeffs)
+               head . toColumns $ cholSH ((trans coeffs <> weightMatrix <> coeffs)
                           `add` scale smoothness integralMatrix)
                `cholSolve` asColumn (trans coeffs <> weightMatrix <> dataYC)
 
