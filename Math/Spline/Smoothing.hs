@@ -3,17 +3,22 @@
 module Math.Spline.Smoothing
     ( ordinary, unweighted, weighted, covWeighted, basicSmooth
     -- * Functions for convenience
-    , smoothCubic, smoothQuadratic
+    , smoothCubic, smoothQuadratic, iSpecial
     ) where
 
+import Control.Arrow
+import Control.Monad
 import Data.List (transpose, zip4)
 
 import Data.Packed.Matrix
 import Data.Packed.Vector
 import qualified Data.Vector.Storable as SV
+import qualified Data.Vector as BV
 import Math.Polynomial hiding (x)
 import Math.Spline.BSpline
 import Math.Spline.BSpline.Reference
+import Math.Spline.Class
+import Math.Spline.ISpline
 import Math.Spline.Knots hiding (fromList, knots)
 import Numeric.Container
 import Numeric.LinearAlgebra.Algorithms
@@ -88,8 +93,7 @@ basicSmooth smoothness degree knotList dataPts weightMatrix =
     (dataXs, dataYs) = unzip dataPts
     dataYC = fromList dataYs
     coeffs = fromColumns $ map (\f -> fromList $ map f dataXs) splineBases
-    solution = traceShow (trans coeffs <> weightMatrix <> coeffs) $
-               head . toColumns $ cholSH ((trans coeffs <> weightMatrix <> coeffs)
+    solution = head . toColumns $ cholSH ((trans coeffs <> weightMatrix <> coeffs)
                           `add` scale smoothness integralMatrix)
                `cholSolve` asColumn (trans coeffs <> weightMatrix <> dataYC)
 
@@ -110,3 +114,26 @@ smoothQuadratic smoothness dataPts =
     (xs,ys,zs) = unzip3 dataPts
     ks = replicate 2 (head xs) ++ xs
          ++ replicate 2 (2 * last xs - (last (init xs)))
+
+-- | Like ordinary least squares, but where the derivative is constrained to be
+-- an iSpline where the sum of control points is 1
+--
+-- Todo: Think of a more general interface to allow such things
+iSpecial :: Int -> [Double] -> [(Double, Double)] -> BSpline SV.Vector Double
+iSpecial degree knotList dataPts = bSpline knots normalSol
+  where
+    splineBases = basisFunctions knots !! degree
+    knots = mkKnots knotList
+    (dataXs, dataYs) = unzip dataPts
+    dataYC = fromList dataYs
+    coeffs = fromColumns $ map (\f -> fromList $ map f dataXs) splineBases
+    numCtrlPts = numKnots knots - degree - 1
+    (iSums, iSum) = (init &&& last) $ map f [0..(numCtrlPts - 1)]
+    normalizeM = fromLists . (++ [map ((/ iSum) . negate) iSums]) . toLists $ diag (SV.replicate (numCtrlPts - 1) 1)
+    normalizeDataYC = zipVectorWith (-) dataYC (coeffs <> last1)
+    last1 = SV.replicate numCtrlPts 0 SV.// [(numCtrlPts - 1, 1/iSum)]
+    f i = BV.sum . controlPoints . toISpline . differentiateBSpline $ bSpline knots ctl
+      where
+        ctl = SV.replicate numCtrlPts 0 SV.// [(i, 1)]
+    sol = (coeffs <> normalizeM) <\> normalizeDataYC
+    normalSol = zipVectorWith (+) (normalizeM <> sol) last1
